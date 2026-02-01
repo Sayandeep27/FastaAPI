@@ -175,7 +175,7 @@ If `is_active` is not provided, it defaults to `True`.
 from pydantic import BaseModel, Field
 
 class User(BaseModel):
-    username: str = Field(..., min_length=3, max_length=20)
+    username: str = Field(..., min_length=3, max_length=20) # here ... means - This value must be provided when creating the model.
     age: int = Field(..., ge=18, le=60)
 ```
 
