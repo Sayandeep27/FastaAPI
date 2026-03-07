@@ -1,39 +1,24 @@
-# 📘 Pydantic Fields & Validators – Complete Guide
-
-A **professional, GitHub‑ready README** explaining **Field**, **validators**, and **all types of validators in Pydantic** with **clear examples, tables, and real‑world code**.
+# Pydantic Field and Validators Guide
 
 ---
 
-## 📌 Table of Contents
+# What is Pydantic
 
-1. What is Pydantic?
-2. What is `Field`?
-3. Why `Field` is Needed
-4. Common `Field` Parameters
-5. What are Validators?
-6. Types of Validators
+Pydantic is a Python library used for **data validation and parsing using Python type hints**.
 
-   * Field Validator
-   * Pre Validator
-   * Post Validator
-   * Root Validator
-   * Pre Root Validator
-7. Field vs Validator (Comparison)
-8. Validation Execution Order
-9. Complete Real‑World Example
-10. Key Takeaways
+It is widely used in:
 
----
+* FastAPI
+* Machine Learning APIs
+* Data pipelines
+* Backend applications
 
-## 1️⃣ What is Pydantic?
+Pydantic automatically:
 
-**Pydantic** is a Python library used for **data validation, parsing, and settings management** using Python type hints.
+* Validates input data
+* Converts data types
 
-It ensures that:
-
-* Input data is **correctly typed**
-* Invalid data is **rejected early**
-* Data structures are **safe and predictable**
+Example:
 
 ```python
 from pydantic import BaseModel
@@ -41,280 +26,561 @@ from pydantic import BaseModel
 class User(BaseModel):
     name: str
     age: int
+
+u = User(name="John", age="25")
+print(u)
 ```
+
+Output:
+
+```
+name='John' age=25
+```
+
+Even though age was provided as a string, Pydantic converted it to integer.
 
 ---
 
-## 2️⃣ What is `Field`?
+# What is Field in Pydantic
 
-### Definition
+`Field()` is used to **add validation rules and metadata to model fields**.
 
-`Field` is used to **add constraints, metadata, and configuration** to model attributes.
+Without Field, Pydantic only validates the **data type**.
 
-Without `Field`, a field only has:
+With Field, you can add:
 
-* a type
-* an optional default value
-
-With `Field`, you can define:
-
-* validation rules
-* required fields
-* string constraints
-* numeric ranges
-* documentation metadata
+* Required fields
+* Default values
+* Numeric constraints
+* String constraints
+* Regex validation
+* Metadata
 
 ---
 
-## 3️⃣ Why `Field` is Needed
-
-### ❌ Without Field
-
-```python
-class User(BaseModel):
-    age: int
-```
-
-Problems:
-
-* Negative values allowed
-* No range checking
-
-### ✅ With Field
+# Basic Example of Field
 
 ```python
 from pydantic import BaseModel, Field
 
 class User(BaseModel):
-    age: int = Field(..., ge=18, le=60)
+    name: str = Field(...)
+    age: int = Field(...)
+
+u = User(name="Alice", age=25)
+print(u)
 ```
 
-✔ Age must be between **18 and 60**
+Explanation
+
+```
+...  → means required field
+```
+
+If you run:
+
+```python
+User(age=25)
+```
+
+Error:
+
+```
+ValidationError: name field required
+```
 
 ---
 
-## 4️⃣ Common `Field` Parameters
+# Why Field is Needed
 
-| Parameter         | Description           |
-| ----------------- | --------------------- |
-| `...`             | Required field        |
-| `default`         | Default value         |
-| `ge`              | Greater than or equal |
-| `gt`              | Greater than          |
-| `le`              | Less than or equal    |
-| `lt`              | Less than             |
-| `min_length`      | Minimum string length |
-| `max_length`      | Maximum string length |
-| `regex`           | Regex validation      |
-| `description`     | Schema documentation  |
-| `example`         | Example value         |
-| `alias`           | Alternate field name  |
-| `default_factory` | Dynamic default       |
-
----
-
-### String Validation Example
+Without Field:
 
 ```python
 class User(BaseModel):
-    username: str = Field(
-        ...,
-        min_length=3,
-        max_length=20,
-        regex="^[a-zA-Z0-9_]+$"
-    )
+    age: int
+```
+
+Only **type validation** happens.
+
+But with Field we can enforce constraints:
+
+```python
+class User(BaseModel):
+    age: int = Field(gt=18, lt=60)
+```
+
+Now age must be between 18 and 60.
+
+---
+
+# Common Field Parameters
+
+| Parameter  | Meaning               |
+| ---------- | --------------------- |
+| ...        | Required field        |
+| default    | Default value         |
+| gt         | Greater than          |
+| ge         | Greater than or equal |
+| lt         | Less than             |
+| le         | Less than or equal    |
+| min_length | Minimum string length |
+| max_length | Maximum string length |
+| regex      | Pattern validation    |
+
+---
+
+# Required Field Example
+
+```python
+from pydantic import BaseModel, Field
+
+class User(BaseModel):
+    name: str = Field(...)
+```
+
+Valid
+
+```
+User(name="John")
+```
+
+Invalid
+
+```
+User()
 ```
 
 ---
 
-## 5️⃣ What are Validators?
+# Default Value Example
 
-### Definition
+```python
+class User(BaseModel):
+    age: int = Field(default=18)
+```
 
-Validators are **custom functions** that automatically validate or transform data.
+Usage
 
-Use validators when:
+```python
+User()
+```
 
-* `Field` is not enough
-* You need custom business logic
-* Validation depends on multiple fields
-* Input needs transformation
+Output
+
+```
+age=18
+```
 
 ---
 
-## 6️⃣ Types of Validators
+# gt (Greater Than)
+
+```python
+class Product(BaseModel):
+    price: float = Field(gt=0)
+```
+
+Valid
+
+```
+price = 100
+```
+
+Invalid
+
+```
+price = -5
+```
+
+Error
+
+```
+value must be greater than 0
+```
 
 ---
 
-### 🔹 1. Field Validator
+# ge (Greater Than or Equal)
 
-Used to validate **a single field** after type conversion.
+```python
+class Product(BaseModel):
+    quantity: int = Field(ge=1)
+```
+
+Valid
+
+```
+quantity = 1
+quantity = 5
+```
+
+Invalid
+
+```
+quantity = 0
+```
+
+---
+
+# lt (Less Than)
+
+```python
+class Student(BaseModel):
+    age: int = Field(lt=60)
+```
+
+Invalid
+
+```
+age = 70
+```
+
+---
+
+# le (Less Than or Equal)
+
+```python
+class Student(BaseModel):
+    marks: int = Field(le=100)
+```
+
+Invalid
+
+```
+marks = 110
+```
+
+---
+
+# min_length
+
+```python
+class User(BaseModel):
+    username: str = Field(min_length=3)
+```
+
+Valid
+
+```
+abc
+```
+
+Invalid
+
+```
+ab
+```
+
+---
+
+# max_length
+
+```python
+class User(BaseModel):
+    username: str = Field(max_length=10)
+```
+
+Invalid
+
+```
+verylongusername
+```
+
+---
+
+# regex
+
+Used for pattern validation.
+
+Example email validation:
+
+```python
+class User(BaseModel):
+    email: str = Field(regex=r'^\S+@\S+\.\S+$')
+```
+
+Valid
+
+```
+abc@gmail.com
+```
+
+Invalid
+
+```
+abc.com
+```
+
+---
+
+# Example Combining Multiple Field Rules
+
+```python
+from pydantic import BaseModel, Field
+
+class Product(BaseModel):
+
+    name: str = Field(
+        ...,
+        min_length=3,
+        max_length=20
+    )
+
+    price: float = Field(
+        gt=0
+    )
+
+    quantity: int = Field(
+        ge=1
+    )
+
+p = Product(
+    name="Laptop",
+    price=50000,
+    quantity=2
+)
+
+print(p)
+```
+
+---
+
+# Validators in Pydantic
+
+Validators are used when **Field constraints are not enough**.
+
+They allow **custom validation logic**.
+
+Example
+
+```
+password must contain uppercase letter
+```
+
+Field cannot easily enforce that rule.
+
+Validators are required.
+
+---
+
+# Types of Validators
+
+| Validator       | Purpose                   |
+| --------------- | ------------------------- |
+| Field Validator | Validates a single field  |
+| Pre Validator   | Runs before validation    |
+| Post Validator  | Runs after validation     |
+| Root Validator  | Validates multiple fields |
+
+---
+
+# Field Validator
+
+Used to validate a specific field.
+
+Example: username cannot contain numbers.
 
 ```python
 from pydantic import BaseModel, validator
 
 class User(BaseModel):
-    email: str
+    username: str
 
-    @validator("email")
-    def validate_email(cls, value):
-        if not value.endswith("@company.com"):
-            raise ValueError("Email must be a company email")
-        return value
+    @validator('username')
+    def check_username(cls, v):
+        if any(char.isdigit() for char in v):
+            raise ValueError("username cannot contain numbers")
+        return v
+```
+
+Usage
+
+```python
+User(username="john123")
+```
+
+Error
+
+```
+username cannot contain numbers
 ```
 
 ---
 
-### 🔹 2. Pre Validator (`pre=True`)
+# Pre Validator
 
-Runs **before type conversion**.
+Runs before type validation.
 
-Used for:
-
-* Cleaning raw input
-* Converting strings
+Used for cleaning or transforming data.
 
 ```python
 class User(BaseModel):
     age: int
 
-    @validator("age", pre=True)
-    def convert_age(cls, value):
-        if isinstance(value, str):
-            if not value.isdigit():
-                raise ValueError("Age must be numeric")
-            return int(value)
-        return value
+    @validator('age', pre=True)
+    def convert_age(cls, v):
+        return int(v)
 ```
 
----
-
-### 🔹 3. Post Validator (Default)
-
-Runs **after type conversion**.
+Usage
 
 ```python
-class Product(BaseModel):
-    price: float
-
-    @validator("price")
-    def check_price(cls, value):
-        if value <= 0:
-            raise ValueError("Price must be positive")
-        return value
+User(age="25")
 ```
 
 ---
 
-### 🔹 4. Root Validator
+# Post Validator
 
-Used for **cross‑field validation**.
+Runs after validation.
+
+```python
+class User(BaseModel):
+    age: int
+
+    @validator('age')
+    def check_age(cls, v):
+        if v < 18:
+            raise ValueError("Age must be >=18")
+        return v
+```
+
+---
+
+# Root Validator
+
+Used when validation depends on multiple fields.
+
+Example
+
+```
+password and confirm_password must match
+```
 
 ```python
 from pydantic import BaseModel, root_validator
 
 class User(BaseModel):
+
     password: str
     confirm_password: str
-
-    @root_validator
-    def passwords_match(cls, values):
-        if values.get("password") != values.get("confirm_password"):
-            raise ValueError("Passwords do not match")
-        return values
-```
-
----
-
-### 🔹 5. Pre Root Validator (`pre=True`)
-
-Runs **before individual field validation**.
-
-```python
-@root_validator(pre=True)
-def inspect_raw_input(cls, values):
-    print(values)
-    return values
-```
-
----
-
-## 7️⃣ Field vs Validator – Comparison
-
-| Feature                | Field | Validator |
-| ---------------------- | ----- | --------- |
-| Simple constraints     | ✅     | ❌         |
-| Complex logic          | ❌     | ✅         |
-| Cross‑field validation | ❌     | ✅         |
-| Data transformation    | ❌     | ✅         |
-| Input cleaning         | ❌     | ✅         |
-
----
-
-## 8️⃣ Validation Execution Order
-
-Validation happens in this order:
-
-1. Pre validators
-2. Type conversion
-3. Field validators
-4. Root validators
-5. Model creation
-
-If any step fails → `ValidationError`
-
----
-
-## 9️⃣ Complete Real‑World Example
-
-```python
-from pydantic import BaseModel, Field, validator, root_validator
-
-class User(BaseModel):
-    username: str = Field(..., min_length=3)
-    age: int = Field(..., ge=18)
-    email: str
-    password: str
-    confirm_password: str
-
-    @validator("email")
-    def validate_email(cls, v):
-        if not v.endswith("@company.com"):
-            raise ValueError("Invalid company email")
-        return v
-
-    @validator("age", pre=True)
-    def parse_age(cls, v):
-        return int(v)
 
     @root_validator
     def check_passwords(cls, values):
-        if values.get("password") != values.get("confirm_password"):
+
+        p1 = values.get("password")
+        p2 = values.get("confirm_password")
+
+        if p1 != p2:
             raise ValueError("Passwords do not match")
+
         return values
+```
+
+Usage
+
+```python
+User(
+    password="abc123",
+    confirm_password="abc123"
+)
+```
+
+Invalid
+
+```python
+User(
+    password="abc123",
+    confirm_password="xyz"
+)
+```
+
+Error
+
+```
+Passwords do not match
 ```
 
 ---
 
-## 🔑 Key Takeaways
+# Field vs Validator
 
-* Use **Field** for simple constraints
-* Use **validators** for custom logic
-* Use **root validators** for cross‑field rules
-* `pre=True` runs **before type casting**
-* Validators must always **return values**
-
----
-
-## ⭐ Recommended Usage
-
-* APIs (FastAPI)
-* Configuration validation
-* Data ingestion pipelines
-* Request/response schemas
+| Feature                 | Field | Validator |
+| ----------------------- | ----- | --------- |
+| Basic validation        | Yes   | Yes       |
+| Numeric constraints     | Yes   | Yes       |
+| String constraints      | Yes   | Yes       |
+| Custom validation logic | No    | Yes       |
+| Multi field validation  | No    | Yes       |
 
 ---
 
-📌 **This README is production‑ready and suitable for direct GitHub upload.**
+# Real FastAPI Style Example
 
-Happy building 🚀
+```python
+from pydantic import BaseModel, Field, validator
+
+class User(BaseModel):
+
+    username: str = Field(
+        ...,
+        min_length=3,
+        max_length=20
+    )
+
+    age: int = Field(
+        ge=18,
+        le=60
+    )
+
+    email: str = Field(
+        regex=r'^\S+@\S+\.\S+$'
+    )
+
+    @validator('username')
+    def no_spaces(cls, v):
+        if " " in v:
+            raise ValueError("username cannot contain spaces")
+        return v
+```
+
+---
+
+# Quick Summary
+
+Field is used for:
+
+* Required fields
+* Default values
+* Numeric validation
+* String validation
+* Regex pattern validation
+
+Common Field parameters
+
+```
+...
+default
+gt
+ge
+lt
+le
+min_length
+max_length
+regex
+```
+
+Validators are used for **custom validation logic**.
+
+Validator types
+
+```
+Field validator
+Pre validator
+Post validator
+Root validator
+```
+
+---
+
+# End of Guide
